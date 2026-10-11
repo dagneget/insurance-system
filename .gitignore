@@ -1,0 +1,30 @@
+# Environment variables
+.env
+*.env.local
+
+# Java / Maven
+target/
+*.class
+*.jar
+*.war
+.mvn/wrapper/maven-wrapper.jar
+
+# Node / Angular
+node_modules/
+.angular/
+dist/
+.npm
+*.log
+
+# IDE and OS
+.idea/
+*.iml
+.vscode/
+.DS_Store
+Thumbs.db
+
+# AI prompt docs
+AGENTS.md
+docs/
+insurance-system-ai-docs/
+
