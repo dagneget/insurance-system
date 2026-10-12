@@ -33,6 +33,22 @@ public class PolicyCreateRequest {
 
     private PolicyStatus status;
 
+    private String productCode = "COMPREHENSIVE";
+
+    private BigDecimal deductibleAmount = new BigDecimal("500.00");
+
+    private BigDecimal vehicleMarketValue;
+
+    private String underwritingSubjectivities;
+
+    private Long agentId;
+
+    private Integer installmentsCount = 1;
+
+    private Boolean referralFlag = false;
+
+    private String referralReason;
+
     public PolicyCreateRequest() {
     }
 
@@ -41,6 +57,20 @@ public class PolicyCreateRequest {
         this.customerId = customerId;
         this.vehicleId = vehicleId;
         this.coverageDescription = coverageDescription;
+        this.startDate = startDate;
+        this.endDate = endDate;
+        this.premium = premium;
+        this.status = status;
+    }
+
+    public PolicyCreateRequest(Long customerId, Long vehicleId, String coverageDescription,
+                               String productCode, BigDecimal deductibleAmount,
+                               LocalDate startDate, LocalDate endDate, BigDecimal premium, PolicyStatus status) {
+        this.customerId = customerId;
+        this.vehicleId = vehicleId;
+        this.coverageDescription = coverageDescription;
+        this.productCode = productCode;
+        this.deductibleAmount = deductibleAmount;
         this.startDate = startDate;
         this.endDate = endDate;
         this.premium = premium;
@@ -101,5 +131,69 @@ public class PolicyCreateRequest {
 
     public void setStatus(PolicyStatus status) {
         this.status = status;
+    }
+
+    public String getProductCode() {
+        return productCode;
+    }
+
+    public void setProductCode(String productCode) {
+        this.productCode = productCode;
+    }
+
+    public BigDecimal getDeductibleAmount() {
+        return deductibleAmount;
+    }
+
+    public void setDeductibleAmount(BigDecimal deductibleAmount) {
+        this.deductibleAmount = deductibleAmount;
+    }
+
+    public BigDecimal getVehicleMarketValue() {
+        return vehicleMarketValue;
+    }
+
+    public void setVehicleMarketValue(BigDecimal vehicleMarketValue) {
+        this.vehicleMarketValue = vehicleMarketValue;
+    }
+
+    public String getUnderwritingSubjectivities() {
+        return underwritingSubjectivities;
+    }
+
+    public void setUnderwritingSubjectivities(String underwritingSubjectivities) {
+        this.underwritingSubjectivities = underwritingSubjectivities;
+    }
+
+    public Long getAgentId() {
+        return agentId;
+    }
+
+    public void setAgentId(Long agentId) {
+        this.agentId = agentId;
+    }
+
+    public Integer getInstallmentsCount() {
+        return installmentsCount;
+    }
+
+    public void setInstallmentsCount(Integer installmentsCount) {
+        this.installmentsCount = installmentsCount;
+    }
+
+    public Boolean getReferralFlag() {
+        return referralFlag;
+    }
+
+    public void setReferralFlag(Boolean referralFlag) {
+        this.referralFlag = referralFlag;
+    }
+
+    public String getReferralReason() {
+        return referralReason;
+    }
+
+    public void setReferralReason(String referralReason) {
+        this.referralReason = referralReason;
     }
 }

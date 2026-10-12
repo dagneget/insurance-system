@@ -10,6 +10,9 @@ public class CustomerDto {
     private OffsetDateTime createdAt;
     private OffsetDateTime updatedAt;
     private int vehicleCount;
+    private Long agentId;
+    private String agentName;
+    private String kycStatus;
 
     public CustomerDto() {
     }
@@ -23,6 +26,21 @@ public class CustomerDto {
         this.createdAt = createdAt;
         this.updatedAt = updatedAt;
         this.vehicleCount = vehicleCount;
+    }
+
+    public CustomerDto(Long id, String fullName, String phone, String email,
+                       OffsetDateTime createdAt, OffsetDateTime updatedAt, int vehicleCount,
+                       Long agentId, String agentName, String kycStatus) {
+        this.id = id;
+        this.fullName = fullName;
+        this.phone = phone;
+        this.email = email;
+        this.createdAt = createdAt;
+        this.updatedAt = updatedAt;
+        this.vehicleCount = vehicleCount;
+        this.agentId = agentId;
+        this.agentName = agentName;
+        this.kycStatus = kycStatus;
     }
 
     public Long getId() {
@@ -79,5 +97,29 @@ public class CustomerDto {
 
     public void setVehicleCount(int vehicleCount) {
         this.vehicleCount = vehicleCount;
+    }
+
+    public Long getAgentId() {
+        return agentId;
+    }
+
+    public void setAgentId(Long agentId) {
+        this.agentId = agentId;
+    }
+
+    public String getAgentName() {
+        return agentName;
+    }
+
+    public void setAgentName(String agentName) {
+        this.agentName = agentName;
+    }
+
+    public String getKycStatus() {
+        return kycStatus;
+    }
+
+    public void setKycStatus(String kycStatus) {
+        this.kycStatus = kycStatus;
     }
 }

@@ -5,6 +5,7 @@ import { ActivatedRoute, RouterLink } from '@angular/router';
 import { PolicyService } from '../../core/services/policy.service';
 import { PaymentService } from '../../core/services/payment.service';
 import { ClaimService } from '../../core/services/claim.service';
+import { AuthService } from '../../core/services/auth.service';
 import { Policy } from '../../core/models/policy.model';
 import { Payment, PaymentCreateRequest } from '../../core/models/payment.model';
 import { ClaimCreateRequest } from '../../core/models/claim.model';
@@ -14,11 +15,40 @@ import { ApiErrorResponse } from '../../core/models/api-error.model';
   selector: 'app-policy-detail',
   standalone: true,
   imports: [CommonModule, FormsModule, RouterLink],
+  styles: [`
+    .breadcrumb-nav {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-bottom: 1.25rem;
+      font-size: 0.8125rem;
+    }
+    .breadcrumb-link {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      color: #64748b;
+      text-decoration: none;
+      transition: color 0.1s ease;
+    }
+    .breadcrumb-link:hover { color: #4f46e5; text-decoration: none; }
+    .breadcrumb-sep { color: #cbd5e1; }
+    .breadcrumb-current { color: #0f172a; font-weight: 500; font-variant-numeric: tabular-nums; }
+  `],
   template: `
     <div class="container">
-      <div style="margin-bottom: 1rem;">
-        <a routerLink="/policies" style="color: var(--text-muted); font-size: 0.875rem;">← Back to Policies</a>
-      </div>
+      <!-- Breadcrumb -->
+      <nav class="breadcrumb-nav no-print" aria-label="Breadcrumb">
+        <a routerLink="/policies" class="breadcrumb-link">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <path d="m19 12H5"/><path d="m12 19-7-7 7-7"/>
+          </svg>
+          Policies
+        </a>
+        <span class="breadcrumb-sep" aria-hidden="true">/</span>
+        <span class="breadcrumb-current">{{ policy?.policyNumber || "Loading…" }}</span>
+      </nav>
+
 
       <!-- Loading / Error -->
       <div *ngIf="loading" class="loading-container">
@@ -45,13 +75,18 @@ import { ApiErrorResponse } from '../../core/models/api-error.model';
           </div>
           <div style="display: flex; gap: 0.5rem;">
             <button
+              *ngIf="canRecordPayment"
               class="btn btn-primary"
               [disabled]="policy.outstandingBalance <= 0"
               (click)="openPaymentModal()"
             >
               + Record Payment
             </button>
-            <button class="btn btn-secondary" (click)="openClaimModal()">
+            <button
+              *ngIf="canSubmitClaim"
+              class="btn btn-secondary"
+              (click)="openClaimModal()"
+            >
               + Submit Claim
             </button>
           </div>
@@ -88,7 +123,8 @@ import { ApiErrorResponse } from '../../core/models/api-error.model';
             <div style="margin-bottom: 1rem;">
               <div style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase;">Customer Name</div>
               <div style="font-size: 1.1rem; font-weight: 600;">
-                <a [routerLink]="['/customers', policy.customerId]">{{ policy.customerName }}</a>
+                <a *ngIf="canViewCustomer" [routerLink]="['/customers', policy.customerId]">{{ policy.customerName }}</a>
+                <span *ngIf="!canViewCustomer">{{ policy.customerName }}</span>
               </div>
               <div style="font-size: 0.875rem; color: var(--text-muted);">Phone: {{ policy.customerPhone }}</div>
             </div>
@@ -131,6 +167,7 @@ import { ApiErrorResponse } from '../../core/models/api-error.model';
               <p style="font-size: 0.8rem; color: var(--text-muted); margin: 0;">Demo transaction ledger records</p>
             </div>
             <button
+              *ngIf="canRecordPayment"
               class="btn btn-sm btn-primary"
               [disabled]="policy.outstandingBalance <= 0"
               (click)="openPaymentModal()"
@@ -359,11 +396,24 @@ export class PolicyDetailComponent implements OnInit {
     description: ''
   };
 
+  get canRecordPayment(): boolean {
+    return this.authService.hasRole(['ROLE_FINANCE_OFFICER', 'ROLE_ADMIN']);
+  }
+
+  get canSubmitClaim(): boolean {
+    return this.authService.hasRole(['ROLE_CLAIMS_OFFICER', 'ROLE_AGENT', 'ROLE_CUSTOMER', 'ROLE_ADMIN']);
+  }
+
+  get canViewCustomer(): boolean {
+    return this.authService.hasRole(['ROLE_AGENT', 'ROLE_ADMIN']);
+  }
+
   constructor(
     private route: ActivatedRoute,
     private policyService: PolicyService,
     private paymentService: PaymentService,
     private claimService: ClaimService,
+    public authService: AuthService,
     private cdr: ChangeDetectorRef
   ) {}
 

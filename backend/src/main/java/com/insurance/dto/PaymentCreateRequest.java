@@ -23,6 +23,8 @@ public class PaymentCreateRequest {
     @Size(max = 255, message = "Note cannot exceed 255 characters")
     private String note;
 
+    private Long billingScheduleId;
+
     public PaymentCreateRequest() {
     }
 
@@ -63,5 +65,13 @@ public class PaymentCreateRequest {
 
     public void setNote(String note) {
         this.note = note;
+    }
+
+    public Long getBillingScheduleId() {
+        return billingScheduleId;
+    }
+
+    public void setBillingScheduleId(Long billingScheduleId) {
+        this.billingScheduleId = billingScheduleId;
     }
 }

@@ -6,6 +6,9 @@ public class DashboardSummaryDto {
     private long totalPolicies;
     private long activePolicies;
     private long draftPolicies;
+    private long expiringPoliciesCount;
+    private long expiredPoliciesCount;
+    private long renewedPoliciesCount;
     private BigDecimal totalPremium;
     private BigDecimal totalPaid;
     private BigDecimal totalOutstanding;
@@ -17,11 +20,15 @@ public class DashboardSummaryDto {
     }
 
     public DashboardSummaryDto(long totalPolicies, long activePolicies, long draftPolicies,
+                               long expiringPoliciesCount, long expiredPoliciesCount, long renewedPoliciesCount,
                                BigDecimal totalPremium, BigDecimal totalPaid, BigDecimal totalOutstanding,
                                long openClaimsCount, long totalCustomers, long totalVehicles) {
         this.totalPolicies = totalPolicies;
         this.activePolicies = activePolicies;
         this.draftPolicies = draftPolicies;
+        this.expiringPoliciesCount = expiringPoliciesCount;
+        this.expiredPoliciesCount = expiredPoliciesCount;
+        this.renewedPoliciesCount = renewedPoliciesCount;
         this.totalPremium = totalPremium;
         this.totalPaid = totalPaid;
         this.totalOutstanding = totalOutstanding;
@@ -52,6 +59,30 @@ public class DashboardSummaryDto {
 
     public void setDraftPolicies(long draftPolicies) {
         this.draftPolicies = draftPolicies;
+    }
+
+    public long getExpiringPoliciesCount() {
+        return expiringPoliciesCount;
+    }
+
+    public void setExpiringPoliciesCount(long expiringPoliciesCount) {
+        this.expiringPoliciesCount = expiringPoliciesCount;
+    }
+
+    public long getExpiredPoliciesCount() {
+        return expiredPoliciesCount;
+    }
+
+    public void setExpiredPoliciesCount(long expiredPoliciesCount) {
+        this.expiredPoliciesCount = expiredPoliciesCount;
+    }
+
+    public long getRenewedPoliciesCount() {
+        return renewedPoliciesCount;
+    }
+
+    public void setRenewedPoliciesCount(long renewedPoliciesCount) {
+        this.renewedPoliciesCount = renewedPoliciesCount;
     }
 
     public BigDecimal getTotalPremium() {

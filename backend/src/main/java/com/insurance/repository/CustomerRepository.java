@@ -17,4 +17,6 @@ public interface CustomerRepository extends JpaRepository<Customer, Long> {
            "c.phone LIKE CONCAT('%', :search, '%')) " +
            "ORDER BY c.id DESC")
     List<Customer> search(@Param("search") String search);
+
+    List<Customer> findByAgentIdOrderByIdDesc(Long agentId);
 }

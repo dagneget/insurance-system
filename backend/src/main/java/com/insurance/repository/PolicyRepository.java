@@ -18,6 +18,10 @@ public interface PolicyRepository extends JpaRepository<Policy, Long> {
 
     List<Policy> findByCustomerIdOrderByIdDesc(Long customerId);
 
+    List<Policy> findByReferralFlagTrueOrderByIdDesc();
+
+    List<Policy> findByAgentIdOrderByIdDesc(Long agentId);
+
     @Query("SELECT p FROM Policy p " +
            "JOIN FETCH p.customer c " +
            "JOIN FETCH p.vehicle v " +
@@ -33,4 +37,17 @@ public interface PolicyRepository extends JpaRepository<Policy, Long> {
 
     @Query("SELECT COALESCE(SUM(p.premium), 0) FROM Policy p WHERE p.status = 'ISSUED'")
     BigDecimal sumIssuedPremiums();
+
+    @Query("SELECT p FROM Policy p " +
+           "JOIN FETCH p.customer c " +
+           "JOIN FETCH p.vehicle v " +
+           "WHERE p.status = 'ISSUED' AND p.endDate <= :cutoffDate AND p.endDate >= :today " +
+           "ORDER BY p.endDate ASC")
+    List<Policy> findExpiringPolicies(@Param("today") java.time.LocalDate today, @Param("cutoffDate") java.time.LocalDate cutoffDate);
+
+    @Query("SELECT COUNT(p) FROM Policy p WHERE p.status = 'ISSUED' AND p.endDate <= :cutoffDate AND p.endDate >= :today")
+    long countExpiringPolicies(@Param("today") java.time.LocalDate today, @Param("cutoffDate") java.time.LocalDate cutoffDate);
+
+    @Query("SELECT p FROM Policy p WHERE p.vehicle.id = :vehicleId AND p.status = 'ISSUED' AND p.endDate >= :today")
+    List<Policy> findActivePoliciesForVehicle(@Param("vehicleId") Long vehicleId, @Param("today") java.time.LocalDate today);
 }

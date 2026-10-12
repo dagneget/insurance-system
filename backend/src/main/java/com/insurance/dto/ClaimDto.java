@@ -25,6 +25,7 @@ public class ClaimDto {
     private String settlementNote;
     private OffsetDateTime settlementDate;
     private OffsetDateTime createdAt;
+    private ClaimInvestigationDto investigation;
 
     public ClaimDto() {
     }
@@ -197,5 +198,13 @@ public class ClaimDto {
 
     public void setCreatedAt(OffsetDateTime createdAt) {
         this.createdAt = createdAt;
+    }
+
+    public ClaimInvestigationDto getInvestigation() {
+        return investigation;
+    }
+
+    public void setInvestigation(ClaimInvestigationDto investigation) {
+        this.investigation = investigation;
     }
 }

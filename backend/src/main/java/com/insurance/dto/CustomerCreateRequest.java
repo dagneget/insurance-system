@@ -18,6 +18,9 @@ public class CustomerCreateRequest {
     @Size(max = 150, message = "Email cannot exceed 150 characters")
     private String email;
 
+    private Long agentId;
+    private String kycStatus;
+
     public CustomerCreateRequest() {
     }
 
@@ -49,5 +52,21 @@ public class CustomerCreateRequest {
 
     public void setEmail(String email) {
         this.email = email;
+    }
+
+    public Long getAgentId() {
+        return agentId;
+    }
+
+    public void setAgentId(Long agentId) {
+        this.agentId = agentId;
+    }
+
+    public String getKycStatus() {
+        return kycStatus;
+    }
+
+    public void setKycStatus(String kycStatus) {
+        this.kycStatus = kycStatus;
     }
 }

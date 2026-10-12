@@ -1,9 +1,6 @@
 package com.insurance.controller;
 
-import com.insurance.dto.ClaimCreateRequest;
-import com.insurance.dto.ClaimDto;
-import com.insurance.dto.ClaimSettlementRequest;
-import com.insurance.dto.ClaimStatusUpdateRequest;
+import com.insurance.dto.*;
 import com.insurance.entity.ClaimStatus;
 import com.insurance.service.ClaimService;
 import jakarta.validation.Valid;
@@ -41,12 +38,12 @@ public class ClaimController {
         return ResponseEntity.status(HttpStatus.CREATED).body(created);
     }
 
-    @PatchMapping("/{id}/status")
-    public ResponseEntity<ClaimDto> updateStatus(
+    @PostMapping("/{id}/review")
+    public ResponseEntity<ClaimDto> reviewClaim(
             @PathVariable Long id,
             @Valid @RequestBody ClaimStatusUpdateRequest request) {
-        ClaimDto updated = claimService.updateStatus(id, request);
-        return ResponseEntity.ok(updated);
+        ClaimDto reviewed = claimService.reviewClaim(id, request);
+        return ResponseEntity.ok(reviewed);
     }
 
     @PostMapping("/{id}/settlements")
@@ -55,5 +52,33 @@ public class ClaimController {
             @Valid @RequestBody ClaimSettlementRequest request) {
         ClaimDto settled = claimService.recordSettlement(id, request);
         return ResponseEntity.status(HttpStatus.CREATED).body(settled);
+    }
+
+    @PostMapping("/{id}/disburse")
+    public ResponseEntity<ClaimPayoutDto> disburseClaim(
+            @PathVariable Long id,
+            @Valid @RequestBody ClaimDisbursementRequest request,
+            @RequestParam(required = false, defaultValue = "marcus.finance") String financeOfficerUsername) {
+        ClaimPayoutDto payout = claimService.disburseClaim(id, request, financeOfficerUsername);
+        return ResponseEntity.status(HttpStatus.CREATED).body(payout);
+    }
+
+    @GetMapping("/disbursements/pending")
+    public ResponseEntity<List<ClaimPayoutDto>> getPendingDisbursements() {
+        return ResponseEntity.ok(claimService.getPendingDisbursements());
+    }
+
+    @GetMapping("/{id}/payout")
+    public ResponseEntity<ClaimPayoutDto> getPayoutByClaimId(@PathVariable Long id) {
+        return ResponseEntity.ok(claimService.getPayoutByClaimId(id));
+    }
+
+    @PostMapping("/{id}/investigate")
+    public ResponseEntity<ClaimDto> investigateClaim(
+            @PathVariable Long id,
+            @RequestBody ClaimInvestigationRequest request,
+            @RequestParam(required = false, defaultValue = "sarah.adjuster") String adjusterUsername) {
+        ClaimDto investigated = claimService.investigateClaim(id, request, adjusterUsername);
+        return ResponseEntity.ok(investigated);
     }
 }

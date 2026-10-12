@@ -3,6 +3,8 @@ package com.insurance.entity;
 import jakarta.persistence.*;
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Table(name = "payments")
@@ -35,8 +37,26 @@ public class Payment {
     @Column(name = "payment_date", nullable = false)
     private OffsetDateTime paymentDate;
 
+    @Column(name = "void_reason", length = 255)
+    private String voidReason;
+
+    @Column(name = "voided_at")
+    private OffsetDateTime voidedAt;
+
+    @Column(name = "maker_username", length = 100)
+    private String makerUsername;
+
+    @Column(name = "checker_username", length = 100)
+    private String checkerUsername;
+
+    @Column(name = "void_status", nullable = false, length = 50)
+    private String voidStatus = "NONE";
+
     @Column(name = "created_at", nullable = false, updatable = false)
     private OffsetDateTime createdAt;
+
+    @OneToMany(mappedBy = "payment", cascade = CascadeType.ALL)
+    private List<PaymentAllocation> paymentAllocations = new ArrayList<>();
 
     public Payment() {
     }
@@ -132,11 +152,59 @@ public class Payment {
         this.paymentDate = paymentDate;
     }
 
+    public String getVoidReason() {
+        return voidReason;
+    }
+
+    public void setVoidReason(String voidReason) {
+        this.voidReason = voidReason;
+    }
+
+    public OffsetDateTime getVoidedAt() {
+        return voidedAt;
+    }
+
+    public void setVoidedAt(OffsetDateTime voidedAt) {
+        this.voidedAt = voidedAt;
+    }
+
     public OffsetDateTime getCreatedAt() {
         return createdAt;
     }
 
     public void setCreatedAt(OffsetDateTime createdAt) {
         this.createdAt = createdAt;
+    }
+
+    public String getMakerUsername() {
+        return makerUsername;
+    }
+
+    public void setMakerUsername(String makerUsername) {
+        this.makerUsername = makerUsername;
+    }
+
+    public String getCheckerUsername() {
+        return checkerUsername;
+    }
+
+    public void setCheckerUsername(String checkerUsername) {
+        this.checkerUsername = checkerUsername;
+    }
+
+    public String getVoidStatus() {
+        return voidStatus;
+    }
+
+    public void setVoidStatus(String voidStatus) {
+        this.voidStatus = voidStatus;
+    }
+
+    public List<PaymentAllocation> getPaymentAllocations() {
+        return paymentAllocations;
+    }
+
+    public void setPaymentAllocations(List<PaymentAllocation> paymentAllocations) {
+        this.paymentAllocations = paymentAllocations;
     }
 }

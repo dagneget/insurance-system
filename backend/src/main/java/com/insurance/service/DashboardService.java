@@ -7,6 +7,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 
 @Service
 public class DashboardService {
@@ -34,6 +35,11 @@ public class DashboardService {
         long totalPolicies = policyRepository.count();
         long activePolicies = policyRepository.countByStatus(PolicyStatus.ISSUED);
         long draftPolicies = policyRepository.countByStatus(PolicyStatus.DRAFT);
+        long expiredPolicies = policyRepository.countByStatus(PolicyStatus.EXPIRED);
+        long renewedPolicies = policyRepository.countByStatus(PolicyStatus.RENEWED);
+
+        LocalDate today = LocalDate.now();
+        long expiringPolicies = policyRepository.countExpiringPolicies(today, today.plusDays(30));
 
         BigDecimal totalPremium = policyRepository.sumIssuedPremiums();
         if (totalPremium == null) {
@@ -58,6 +64,9 @@ public class DashboardService {
                 totalPolicies,
                 activePolicies,
                 draftPolicies,
+                expiringPolicies,
+                expiredPolicies,
+                renewedPolicies,
                 totalPremium,
                 totalPaid,
                 totalOutstanding,

@@ -2,8 +2,11 @@ package com.insurance.service;
 
 import com.insurance.dto.PaymentCreateRequest;
 import com.insurance.dto.PaymentDto;
+import com.insurance.dto.PaymentVoidRequest;
 import com.insurance.entity.*;
 import com.insurance.exception.BusinessRuleException;
+import com.insurance.repository.BillingScheduleRepository;
+import com.insurance.repository.PaymentAllocationRepository;
 import com.insurance.repository.PaymentRepository;
 import com.insurance.repository.PolicyRepository;
 import org.junit.jupiter.api.BeforeEach;
@@ -15,6 +18,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -29,6 +33,18 @@ class PaymentServiceTest {
 
     @Mock
     private PolicyRepository policyRepository;
+
+    @Mock
+    private BillingScheduleRepository billingScheduleRepository;
+
+    @Mock
+    private PaymentAllocationRepository paymentAllocationRepository;
+
+    @Mock
+    private AuditLogService auditLogService;
+
+    @Mock
+    private NotificationService notificationService;
 
     @InjectMocks
     private PaymentService paymentService;
@@ -80,6 +96,7 @@ class PaymentServiceTest {
         assertEquals("DEMO-REF-001", result.getTransactionReference());
         assertEquals(PaymentStatus.SUCCESS, result.getStatus());
         verify(paymentRepository).save(any(Payment.class));
+        verify(auditLogService).recordAction(any(), eq("ROLE_FINANCE_OFFICER"), eq("PAYMENT_COLLECTED"), eq("Payment"), eq(100L), any(), any(), any());
     }
 
     @Test
@@ -126,11 +143,78 @@ class PaymentServiceTest {
                 "DEMO",
                 "Zero amount"
         );
-
         when(policyRepository.findById(10L)).thenReturn(Optional.of(policy));
 
         BusinessRuleException ex = assertThrows(BusinessRuleException.class, () -> paymentService.recordPayment(10L, request));
         assertTrue(ex.getMessage().contains("greater than zero"));
+        verify(paymentRepository, never()).save(any());
+    }
+
+    @Test
+    void voidPayment_BelowThreshold_ExecutesDirectly() {
+        Payment payment = new Payment(policy, new BigDecimal("1000.00"), "PAY-001", "DEMO", PaymentStatus.SUCCESS, "Note");
+        payment.setId(50L);
+
+        when(paymentRepository.findById(50L)).thenReturn(Optional.of(payment));
+        when(paymentRepository.save(any(Payment.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        PaymentDto result = paymentService.voidPayment(50L, new PaymentVoidRequest("Erroneous double payment entered"));
+
+        assertNotNull(result);
+        assertEquals(PaymentStatus.VOIDED, result.getStatus());
+        assertEquals("APPROVED", result.getVoidStatus());
+        assertEquals("Erroneous double payment entered", result.getVoidReason());
+        assertNotNull(result.getVoidedAt());
+        verify(paymentRepository).save(payment);
+    }
+
+    @Test
+    void voidPayment_AboveThreshold_WithoutChecker_EntersPendingApproval() {
+        Payment payment = new Payment(policy, new BigDecimal("3500.00"), "PAY-003", "BANK_TRANSFER", PaymentStatus.SUCCESS, "Large payment");
+        payment.setId(60L);
+
+        when(paymentRepository.findById(60L)).thenReturn(Optional.of(payment));
+        when(paymentRepository.save(any(Payment.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        PaymentVoidRequest request = new PaymentVoidRequest("Mistaken premium bank wire", "marcus.finance", null);
+        PaymentDto result = paymentService.voidPayment(60L, request);
+
+        assertNotNull(result);
+        assertEquals(PaymentStatus.SUCCESS, result.getStatus()); // remains SUCCESS until approved
+        assertEquals("PENDING_APPROVAL", result.getVoidStatus());
+        assertEquals("marcus.finance", result.getMakerUsername());
+        verify(paymentRepository).save(payment);
+    }
+
+    @Test
+    void voidPayment_AboveThreshold_WithDistinctChecker_ExecutesDualSignoff() {
+        Payment payment = new Payment(policy, new BigDecimal("3500.00"), "PAY-004", "BANK_TRANSFER", PaymentStatus.SUCCESS, "Large payment");
+        payment.setId(61L);
+
+        when(paymentRepository.findById(61L)).thenReturn(Optional.of(payment));
+        when(paymentRepository.save(any(Payment.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        PaymentVoidRequest request = new PaymentVoidRequest("Mistaken premium bank wire", "marcus.finance", "elena.manager");
+        PaymentDto result = paymentService.voidPayment(61L, request);
+
+        assertNotNull(result);
+        assertEquals(PaymentStatus.VOIDED, result.getStatus());
+        assertEquals("APPROVED", result.getVoidStatus());
+        assertEquals("marcus.finance", result.getMakerUsername());
+        assertEquals("elena.manager", result.getCheckerUsername());
+        verify(paymentRepository).save(payment);
+    }
+
+    @Test
+    void voidPayment_RejectsAlreadyVoidedPayment() {
+        Payment payment = new Payment(policy, new BigDecimal("1000.00"), "PAY-002", "DEMO", PaymentStatus.VOIDED, "Note");
+        payment.setId(51L);
+
+        when(paymentRepository.findById(51L)).thenReturn(Optional.of(payment));
+
+        BusinessRuleException ex = assertThrows(BusinessRuleException.class,
+                () -> paymentService.voidPayment(51L, new PaymentVoidRequest("Already voided")));
+        assertTrue(ex.getMessage().contains("Only successful payments can be voided"));
         verify(paymentRepository, never()).save(any());
     }
 }

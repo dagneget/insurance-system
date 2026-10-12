@@ -30,6 +30,11 @@ export class ApiService {
       .pipe(catchError(this.handleError));
   }
 
+  put<T>(endpoint: string, body: any): Observable<T> {
+    return this.http.put<T>(`${this.baseUrl}${endpoint}`, body)
+      .pipe(catchError(this.handleError));
+  }
+
   patch<T>(endpoint: string, body: any): Observable<T> {
     return this.http.patch<T>(`${this.baseUrl}${endpoint}`, body)
       .pipe(catchError(this.handleError));

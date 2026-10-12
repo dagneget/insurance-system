@@ -1,5 +1,39 @@
 export type ClaimStatus = 'SUBMITTED' | 'UNDER_REVIEW' | 'APPROVED' | 'REJECTED' | 'SETTLED';
 
+export interface ClaimInvestigation {
+  id: number;
+  claimId: number;
+  assignedAdjusterId?: number;
+  assignedAdjusterName?: string;
+  claimType: 'OWN_DAMAGE' | 'THIRD_PARTY' | 'TOTAL_LOSS';
+  surveyorName?: string;
+  surveyorNotes?: string;
+  repairEstimate: number;
+  depreciationAmount: number;
+  excessApplied: number;
+  salvageValue: number;
+  sumInsured?: number;
+  marketValue?: number;
+  totalLoss: boolean;
+  fraudFlags?: string;
+  recommendedPayout?: number;
+  investigationStatus: string;
+}
+
+export interface ClaimInvestigationRequest {
+  assignedAdjusterId?: number;
+  claimType?: string;
+  surveyorName?: string;
+  surveyorNotes?: string;
+  repairEstimate?: number;
+  depreciationAmount?: number;
+  excessApplied?: number;
+  salvageValue?: number;
+  sumInsured?: number;
+  marketValue?: number;
+  investigationStatus?: string;
+}
+
 export interface Claim {
   id: number;
   claimNumber: string;
@@ -19,6 +53,7 @@ export interface Claim {
   settlementNote?: string;
   settlementDate?: string;
   createdAt: string;
+  investigation?: ClaimInvestigation;
 }
 
 export interface ClaimCreateRequest {

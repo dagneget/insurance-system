@@ -27,4 +27,12 @@ public interface ClaimRepository extends JpaRepository<Claim, Long> {
 
     @Query("SELECT COUNT(c) FROM Claim c WHERE c.status IN ('SUBMITTED', 'UNDER_REVIEW', 'APPROVED')")
     long countOpenClaims();
+
+    @Query("SELECT c FROM Claim c " +
+           "JOIN FETCH c.policy p " +
+           "JOIN FETCH p.vehicle v " +
+           "JOIN FETCH p.customer cust " +
+           "WHERE cust.id = :customerId " +
+           "ORDER BY c.id DESC")
+    List<Claim> findByCustomerIdWithDetails(@Param("customerId") Long customerId);
 }

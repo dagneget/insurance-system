@@ -1,7 +1,9 @@
 package com.insurance.service;
 
 import com.insurance.dto.ClaimCreateRequest;
+import com.insurance.dto.ClaimDisbursementRequest;
 import com.insurance.dto.ClaimDto;
+import com.insurance.dto.ClaimPayoutDto;
 import com.insurance.dto.ClaimSettlementRequest;
 import com.insurance.dto.ClaimStatusUpdateRequest;
 import com.insurance.entity.*;
@@ -31,6 +33,21 @@ class ClaimServiceTest {
 
     @Mock
     private PolicyRepository policyRepository;
+
+    @Mock
+    private com.insurance.repository.ClaimPayoutRepository claimPayoutRepository;
+
+    @Mock
+    private com.insurance.repository.ClaimInvestigationRepository claimInvestigationRepository;
+
+    @Mock
+    private com.insurance.repository.UserRepository userRepository;
+
+    @Mock
+    private AuditLogService auditLogService;
+
+    @Mock
+    private NotificationService notificationService;
 
     @InjectMocks
     private ClaimService claimService;
@@ -183,5 +200,82 @@ class ClaimServiceTest {
         ClaimSettlementRequest request = new ClaimSettlementRequest(new BigDecimal("500.00"), "SETTLE-001", "Premature");
         BusinessRuleException ex = assertThrows(BusinessRuleException.class, () -> claimService.recordSettlement(100L, request));
         assertTrue(ex.getMessage().contains("Only APPROVED claims can be settled"));
+    }
+
+    @Test
+    void disburseClaim_Success() {
+        Claim claim = new Claim("CLM-2026-0001", issuedPolicy, LocalDate.of(2026, 5, 1), "Dent", new BigDecimal("1000.00"));
+        claim.setId(100L);
+        claim.setStatus(ClaimStatus.APPROVED);
+        claim.setApprovedAmount(new BigDecimal("950.00"));
+
+        when(claimRepository.findById(100L)).thenReturn(Optional.of(claim));
+        when(claimPayoutRepository.findByClaimId(100L)).thenReturn(Optional.empty());
+        when(claimPayoutRepository.save(any(ClaimPayout.class))).thenAnswer(inv -> {
+            ClaimPayout p = inv.getArgument(0);
+            p.setId(200L);
+            return p;
+        });
+
+        ClaimDisbursementRequest request = new ClaimDisbursementRequest(
+                new BigDecimal("950.00"), "BANK_TRANSFER", "DISB-WIRE-001", "IDEMP-KEY-99", "Settlement wire transfer"
+        );
+
+        ClaimPayoutDto result = claimService.disburseClaim(100L, request, "marcus.finance");
+
+        assertNotNull(result);
+        assertEquals(new BigDecimal("950.00"), result.getDisbursedAmount());
+        assertEquals("DISBURSED", result.getStatus());
+        assertEquals("marcus.finance", result.getDisbursedBy());
+        assertEquals("DISB-WIRE-001", result.getTransactionReference());
+        assertEquals(ClaimStatus.SETTLED, claim.getStatus());
+        verify(auditLogService).recordAction(eq("marcus.finance"), eq("ROLE_FINANCE_OFFICER"), eq("CLAIM_PAYOUT_DISBURSED"), eq("ClaimPayout"), eq(200L), any(), any(), any());
+    }
+
+    @Test
+    void investigateClaim_Success() {
+        Claim claim = new Claim("CLM-2026-0001", issuedPolicy, LocalDate.of(2026, 5, 1), "Front collision", new BigDecimal("5000.00"));
+        claim.setId(100L);
+
+        when(claimRepository.findById(100L)).thenReturn(Optional.of(claim));
+        when(claimInvestigationRepository.findByClaimId(100L)).thenReturn(Optional.empty());
+        when(claimInvestigationRepository.save(any(ClaimInvestigation.class))).thenAnswer(inv -> {
+            ClaimInvestigation ci = inv.getArgument(0);
+            ci.setId(10L);
+            return ci;
+        });
+
+        com.insurance.dto.ClaimInvestigationRequest req = new com.insurance.dto.ClaimInvestigationRequest();
+        req.setClaimType("OWN_DAMAGE");
+        req.setSurveyorName("Apex Assessors Ltd");
+        req.setRepairEstimate(new BigDecimal("4000.00"));
+        req.setDepreciationAmount(new BigDecimal("300.00"));
+        req.setExcessApplied(new BigDecimal("500.00"));
+
+        ClaimDto result = claimService.investigateClaim(100L, req, "sarah.adjuster");
+
+        assertNotNull(result);
+        assertNotNull(result.getInvestigation());
+        assertEquals(new BigDecimal("4000.00"), result.getInvestigation().getRepairEstimate());
+        assertEquals(new BigDecimal("3200.00"), result.getInvestigation().getRecommendedPayout());
+    }
+
+    @Test
+    void reviewClaim_MakerCheckerRequiresSeniorManagerAbove10000() {
+        Claim claim = new Claim("CLM-2026-0001", issuedPolicy, LocalDate.of(2026, 5, 1), "Engine flood", new BigDecimal("15000.00"));
+        claim.setId(100L);
+        claim.setStatus(ClaimStatus.UNDER_REVIEW);
+
+        when(claimRepository.findById(100L)).thenReturn(Optional.of(claim));
+
+        ClaimStatusUpdateRequest request = new ClaimStatusUpdateRequest(
+                ClaimStatus.APPROVED, "Approved by adjuster", new BigDecimal("12000.00")
+        );
+
+        // sarah.adjuster is not Elena (Senior Manager)
+        BusinessRuleException ex = assertThrows(BusinessRuleException.class, () ->
+                claimService.reviewClaim(100L, request, "sarah.adjuster")
+        );
+        assertTrue(ex.getMessage().contains("Maker-Checker Control"));
     }
 }

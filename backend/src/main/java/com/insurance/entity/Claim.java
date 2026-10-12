@@ -60,6 +60,12 @@ public class Claim {
     @Column(name = "updated_at", nullable = false)
     private OffsetDateTime updatedAt;
 
+    @OneToOne(mappedBy = "claim", cascade = CascadeType.ALL)
+    private ClaimInvestigation investigation;
+
+    @OneToOne(mappedBy = "claim", cascade = CascadeType.ALL)
+    private ClaimPayout payout;
+
     public Claim() {
     }
 
@@ -218,5 +224,21 @@ public class Claim {
 
     public void setUpdatedAt(OffsetDateTime updatedAt) {
         this.updatedAt = updatedAt;
+    }
+
+    public ClaimInvestigation getInvestigation() {
+        return investigation;
+    }
+
+    public void setInvestigation(ClaimInvestigation investigation) {
+        this.investigation = investigation;
+    }
+
+    public ClaimPayout getPayout() {
+        return payout;
+    }
+
+    public void setPayout(ClaimPayout payout) {
+        this.payout = payout;
     }
 }
