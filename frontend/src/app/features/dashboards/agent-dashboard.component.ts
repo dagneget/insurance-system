@@ -206,9 +206,6 @@ import { ApiErrorResponse } from '../../core/models/api-error.model';
                       <a [routerLink]="['/customers', c.id]" class="btn-row-action" title="View details">
                         Profile
                       </a>
-                      <a [routerLink]="['/users', c.id, 'dashboard']" class="btn-row-action btn-row-primary" title="Open Client Portal">
-                        Portal
-                      </a>
                     </div>
                   </td>
                 </tr>
@@ -1553,10 +1550,14 @@ export class AgentDashboardComponent implements OnInit {
       next: (res) => {
         this.submittingOnboarding = false;
         this.closeOnboardingModal();
-        this.actionSuccessMessage = res.message || 'Client successfully onboarded to agency portfolio.';
+        let creds = '';
+        if (res.loginUsername && res.temporaryPassword) {
+          creds = ` — Client Portal Account Created: Username: "${res.loginUsername}" | Password: "${res.temporaryPassword}"`;
+        }
+        this.actionSuccessMessage = (res.message || 'Client successfully onboarded to agency portfolio.') + creds;
         this.loadData();
         this.cdr.markForCheck();
-        setTimeout(() => { this.actionSuccessMessage = null; this.cdr.markForCheck(); }, 5000);
+        setTimeout(() => { this.actionSuccessMessage = null; this.cdr.markForCheck(); }, 15000);
       },
       error: (err) => {
         this.submittingOnboarding = false;

@@ -22,7 +22,7 @@ import { ApiErrorResponse } from '../../core/models/api-error.model';
         </div>
         <div style="display: flex; gap: 0.5rem;">
           <a routerLink="/customers" class="btn btn-secondary">+ Register New Customer</a>
-          <a routerLink="/dashboard" class="btn btn-primary">Underwriting Overview</a>
+          <a routerLink="/dashboards/admin" class="btn btn-primary">Operations Desk</a>
         </div>
       </div>
 

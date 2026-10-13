@@ -46,12 +46,12 @@ import { UserRole } from '../../core/models/auth.model';
         <!-- Sign-in form -->
         <form (ngSubmit)="onSubmit()" novalidate aria-label="Sign-in form">
           <div class="form-group">
-            <label class="form-label" for="login-username">Username</label>
+            <label class="form-label" for="login-username">Username or Email</label>
             <input
               id="login-username"
               type="text"
               class="form-control"
-              placeholder="e.g. alexander.uw"
+              placeholder="e.g. username or registered email"
               [(ngModel)]="username"
               name="username"
               required

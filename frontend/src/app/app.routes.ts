@@ -92,13 +92,13 @@ export const routes: Routes = [
     path: 'users',
     component: UserDirectoryComponent,
     canActivate: [authGuard, roleGuard],
-    data: { roles: ['ROLE_AGENT', 'ROLE_ADMIN'] }
+    data: { roles: ['ROLE_ADMIN'] }
   },
   {
     path: 'users/:id/dashboard',
     component: UserDashboardComponent,
     canActivate: [authGuard, roleGuard],
-    data: { roles: ['ROLE_CUSTOMER', 'ROLE_AGENT', 'ROLE_ADMIN'] }
+    data: { roles: ['ROLE_CUSTOMER', 'ROLE_ADMIN'] }
   },
   { path: 'customers/:id/dashboard', redirectTo: 'users/:id/dashboard' },
 

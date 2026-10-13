@@ -27,8 +27,8 @@ public class AuthService {
 
     @Transactional
     public UserDto login(LoginRequest request) {
-        String username = request.getUsername().trim();
-        User user = userRepository.findByUsername(username)
+        String identifier = request.getUsername().trim();
+        User user = userRepository.findByUsernameOrEmailIgnoreCase(identifier)
                 .orElseThrow(() -> new BusinessRuleException("Invalid username or password"));
 
         if (!user.isActive()) {

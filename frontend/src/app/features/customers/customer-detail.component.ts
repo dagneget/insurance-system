@@ -319,7 +319,8 @@ export class CustomerDetailComponent implements OnInit {
   };
 
   get canAccessCustomerPortal(): boolean {
-    return this.authService.hasRole(['ROLE_AGENT', 'ROLE_ADMIN']);
+    return this.authService.hasRole(['ROLE_ADMIN']) ||
+      (this.authService.hasRole(['ROLE_CUSTOMER']) && this.authService.currentUser?.customerId === this.customerId);
   }
 
   constructor(

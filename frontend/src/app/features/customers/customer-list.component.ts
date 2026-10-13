@@ -385,13 +385,17 @@ export class CustomerListComponent implements OnInit {
       next: (created) => {
         this.submitting = false;
         this.showModal = false;
-        this.successMessage = `Customer ${created.fullName} created successfully!`;
+        let credsInfo = '';
+        if (created.loginUsername) {
+          credsInfo = ` — Portal Account: "${created.loginUsername}" (or registered email) | Password: "${created.temporaryPassword || 'password123'}"`;
+        }
+        this.successMessage = `Customer ${created.fullName} registered successfully!${credsInfo}`;
         this.loadCustomers();
         this.cdr.markForCheck();
         setTimeout(() => {
           this.successMessage = '';
           this.cdr.markForCheck();
-        }, 4000);
+        }, 12000);
       },
       error: (err: ApiErrorResponse) => {
         this.submitting = false;

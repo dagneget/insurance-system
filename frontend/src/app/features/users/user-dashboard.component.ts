@@ -27,9 +27,14 @@ import { AuthService } from '../../core/services/auth.service';
     <div class="container">
       <!-- Breadcrumb & User Switcher Bar -->
       <div class="top-nav-bar no-print">
-        <a routerLink="/users" class="btn btn-sm btn-secondary font-medium">
-          ← Back to User Directory
+        <a *ngIf="isAdmin" routerLink="/dashboards/admin" class="btn btn-sm btn-secondary font-medium">
+          ← Back to Admin Desk
         </a>
+        <div *ngIf="!isAdmin" class="portal-badge-indicator">
+          <span class="badge badge-success" style="font-size: 0.8rem; padding: 0.35rem 0.75rem;">
+            Personal Policyholder Portal
+          </span>
+        </div>
         <div class="nav-right-tools">
           <!-- Notification Bell -->
           <div class="notif-wrapper">
@@ -66,8 +71,8 @@ import { AuthService } from '../../core/services/auth.service';
             </div>
           </div>
 
-          <a routerLink="/users" class="btn btn-sm btn-secondary" title="Switch User">
-            ⇄ Switch User Profile
+          <a *ngIf="isAdmin" routerLink="/actors" class="btn btn-sm btn-secondary" title="Switch Actor">
+            ⇄ Switch Actor
           </a>
         </div>
       </div>
@@ -1094,16 +1099,22 @@ export class UserDashboardComponent implements OnInit {
     private cdr: ChangeDetectorRef
   ) {}
 
+  get isAdmin(): boolean {
+    return this.authService.hasRole(['ROLE_ADMIN']);
+  }
+
   ngOnInit(): void {
     this.route.params.subscribe((params) => {
-      if (params['id']) {
-        this.customerId = Number(params['id']);
-      } else {
-        // If logged in as customer, use their associated customer ID if available
-        const user = this.authService.currentUser;
-        if (user && user.roles.includes('ROLE_CUSTOMER')) {
-          this.customerId = 1; // Abebe Bikila
+      const user = this.authService.currentUser;
+      if (user && user.roles.includes('ROLE_CUSTOMER')) {
+        const currentCustomerId = user.customerId || 1;
+        if (params['id'] && Number(params['id']) !== currentCustomerId) {
+          this.router.navigate(['/dashboards/customer']);
+          return;
         }
+        this.customerId = currentCustomerId;
+      } else if (params['id']) {
+        this.customerId = Number(params['id']);
       }
       this.loadDashboard();
       this.loadNotifications();

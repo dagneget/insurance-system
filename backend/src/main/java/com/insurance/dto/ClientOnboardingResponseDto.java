@@ -4,6 +4,8 @@ public class ClientOnboardingResponseDto {
     private CustomerDto customer;
     private VehicleDto vehicle;
     private String message;
+    private String loginUsername;
+    private String temporaryPassword;
 
     public ClientOnboardingResponseDto() {}
 
@@ -11,6 +13,14 @@ public class ClientOnboardingResponseDto {
         this.customer = customer;
         this.vehicle = vehicle;
         this.message = message;
+    }
+
+    public ClientOnboardingResponseDto(CustomerDto customer, VehicleDto vehicle, String message, String loginUsername, String temporaryPassword) {
+        this.customer = customer;
+        this.vehicle = vehicle;
+        this.message = message;
+        this.loginUsername = loginUsername;
+        this.temporaryPassword = temporaryPassword;
     }
 
     public CustomerDto getCustomer() {
@@ -35,5 +45,21 @@ public class ClientOnboardingResponseDto {
 
     public void setMessage(String message) {
         this.message = message;
+    }
+
+    public String getLoginUsername() {
+        return loginUsername;
+    }
+
+    public void setLoginUsername(String loginUsername) {
+        this.loginUsername = loginUsername;
+    }
+
+    public String getTemporaryPassword() {
+        return temporaryPassword;
+    }
+
+    public void setTemporaryPassword(String temporaryPassword) {
+        this.temporaryPassword = temporaryPassword;
     }
 }

@@ -13,6 +13,7 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -30,6 +31,7 @@ public class CustomerService {
     private final ClaimService claimService;
     private final AuditLogService auditLogService;
     private final NotificationService notificationService;
+    private final AuthService authService;
 
     public CustomerService(CustomerRepository customerRepository,
                            PolicyRepository policyRepository,
@@ -42,7 +44,8 @@ public class CustomerService {
                            PaymentService paymentService,
                            ClaimService claimService,
                            AuditLogService auditLogService,
-                           NotificationService notificationService) {
+                           NotificationService notificationService,
+                           AuthService authService) {
         this.customerRepository = customerRepository;
         this.policyRepository = policyRepository;
         this.vehicleRepository = vehicleRepository;
@@ -55,6 +58,7 @@ public class CustomerService {
         this.claimService = claimService;
         this.auditLogService = auditLogService;
         this.notificationService = notificationService;
+        this.authService = authService;
     }
 
     @Transactional(readOnly = true)
@@ -236,6 +240,9 @@ public class CustomerService {
 
         Customer saved = customerRepository.save(customer);
 
+        // Auto-provision policyholder login account so client can immediately authenticate
+        User portalUser = provisionCustomerUser(saved);
+
         auditLogService.recordAction(
                 actorUsername != null ? actorUsername : "SYSTEM",
                 "ROLE_AGENT",
@@ -243,11 +250,19 @@ public class CustomerService {
                 "Customer",
                 saved.getId(),
                 null,
-                Map.of("fullName", saved.getFullName(), "phone", saved.getPhone(), "kycStatus", saved.getKycStatus()),
+                Map.of(
+                        "fullName", saved.getFullName(),
+                        "phone", saved.getPhone(),
+                        "kycStatus", saved.getKycStatus(),
+                        "loginUsername", portalUser.getUsername()
+                ),
                 null
         );
 
-        return toDto(saved);
+        CustomerDto dto = toDto(saved);
+        dto.setLoginUsername(portalUser.getUsername());
+        dto.setTemporaryPassword("password123");
+        return dto;
     }
 
     @Transactional
@@ -297,7 +312,12 @@ public class CustomerService {
             savedVehicle = vehicleRepository.save(vehicle);
         }
 
-        // 3. Immutable audit trail
+        // 3. Auto-provision policyholder login account in app_users
+        User portalUser = provisionCustomerUser(savedCustomer);
+        String finalUsername = portalUser.getUsername();
+        String tempPassword = "password123";
+
+        // 4. Immutable audit trail
         auditLogService.recordAction(
                 agentUsername != null ? agentUsername : "david.agent",
                 "ROLE_AGENT",
@@ -309,27 +329,74 @@ public class CustomerService {
                         "customerName", savedCustomer.getFullName(),
                         "phone", savedCustomer.getPhone(),
                         "vehiclePlate", savedVehicle != null ? savedVehicle.getRegistrationNumber() : "NONE",
-                        "agent", agent != null ? agent.getUsername() : "UNASSIGNED"
+                        "agent", agent != null ? agent.getUsername() : "UNASSIGNED",
+                        "loginUsername", finalUsername
                 ),
                 null
         );
 
-        // 4. Welcome notification to customer
-        notificationService.sendCustomerNotification(
-                savedCustomer.getId(),
-                "Welcome to SafeMotor Portal",
-                "Dear " + savedCustomer.getFullName() + ", your account has been onboarded by agent " +
-                        (agent != null ? agent.getFullName() : "David Kim") + ". Your KYC status is " + savedCustomer.getKycStatus() + ".",
-                "SUCCESS",
-                "/customers/" + savedCustomer.getId()
-        );
-
         CustomerDto customerDto = toDto(savedCustomer);
+        customerDto.setLoginUsername(finalUsername);
+        customerDto.setTemporaryPassword(tempPassword);
         VehicleDto vehicleDto = savedVehicle != null ? vehicleService.toDto(savedVehicle) : null;
         String msg = "Client " + savedCustomer.getFullName() + " onboarded successfully" +
                 (savedVehicle != null ? " with initial vehicle " + savedVehicle.getRegistrationNumber() : "");
 
-        return new ClientOnboardingResponseDto(customerDto, vehicleDto, msg);
+        return new ClientOnboardingResponseDto(customerDto, vehicleDto, msg, finalUsername, tempPassword);
+    }
+
+    public User provisionCustomerUser(Customer customer) {
+        if (customer.getId() != null) {
+            Optional<User> existing = userRepository.findByCustomerId(customer.getId());
+            if (existing.isPresent()) {
+                return existing.get();
+            }
+        }
+
+        String cleanName = customer.getFullName().trim().toLowerCase().replaceAll("[^a-z0-9]+", ".");
+        cleanName = cleanName.replaceAll("\\.+", ".");
+        if (cleanName.startsWith(".")) {
+            cleanName = cleanName.substring(1);
+        }
+        if (cleanName.endsWith(".")) {
+            cleanName = cleanName.substring(0, cleanName.length() - 1);
+        }
+        if (cleanName.isBlank()) {
+            cleanName = "customer." + (customer.getId() != null ? customer.getId() : "user");
+        }
+
+        String baseUsername = cleanName + ".customer";
+        String finalUsername = baseUsername;
+        int suffix = 1;
+        while (userRepository.existsByUsername(finalUsername)) {
+            finalUsername = baseUsername + suffix++;
+        }
+
+        String tempPassword = "password123";
+        String passHash = authService.hashPassword(tempPassword);
+        User portalUser = new User(
+                finalUsername,
+                passHash,
+                customer.getFullName(),
+                customer.getEmail(),
+                customer
+        );
+        portalUser.getRoles().add("ROLE_CUSTOMER");
+        portalUser.setActive(true);
+        User savedUser = userRepository.save(portalUser);
+
+        // Welcome notification with credentials to customer
+        notificationService.sendCustomerNotification(
+                customer.getId(),
+                "SafeMotor Portal Credentials Dispatched",
+                "Welcome " + customer.getFullName() + "! Your policyholder portal account is active. Username: " +
+                        finalUsername + " (or email: " + (customer.getEmail() != null ? customer.getEmail() : finalUsername) +
+                        ") | Password: " + tempPassword + " (log in at /login).",
+                "SUCCESS",
+                "/dashboards/customer"
+        );
+
+        return savedUser;
     }
 
     @Transactional

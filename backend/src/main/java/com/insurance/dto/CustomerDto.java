@@ -13,6 +13,8 @@ public class CustomerDto {
     private Long agentId;
     private String agentName;
     private String kycStatus;
+    private String loginUsername;
+    private String temporaryPassword;
 
     public CustomerDto() {
     }
@@ -121,5 +123,21 @@ public class CustomerDto {
 
     public void setKycStatus(String kycStatus) {
         this.kycStatus = kycStatus;
+    }
+
+    public String getLoginUsername() {
+        return loginUsername;
+    }
+
+    public void setLoginUsername(String loginUsername) {
+        this.loginUsername = loginUsername;
+    }
+
+    public String getTemporaryPassword() {
+        return temporaryPassword;
+    }
+
+    public void setTemporaryPassword(String temporaryPassword) {
+        this.temporaryPassword = temporaryPassword;
     }
 }

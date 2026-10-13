@@ -49,6 +49,8 @@ class CustomerServiceTest {
     private AuditLogService auditLogService;
     @Mock
     private NotificationService notificationService;
+    @Mock
+    private AuthService authService;
 
     private CustomerService customerService;
 
@@ -66,8 +68,11 @@ class CustomerServiceTest {
                 paymentService,
                 claimService,
                 auditLogService,
-                notificationService
+                notificationService,
+                authService
         );
+        lenient().when(userRepository.save(any(User.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        lenient().when(authService.hashPassword(anyString())).thenReturn("hashed_pass");
     }
 
     @Test
@@ -162,20 +167,24 @@ class CustomerServiceTest {
 
         VehicleDto vDto = new VehicleDto(100L, 20L, "Chala Tadesse", "AA-3-99887", "Toyota", "Hilux", 2022, OffsetDateTime.now());
         when(vehicleService.toDto(savedVehicle)).thenReturn(vDto);
+        when(userRepository.existsByUsername(anyString())).thenReturn(false);
+        when(authService.hashPassword(anyString())).thenReturn("hashed123");
 
         ClientOnboardingResponseDto response = customerService.onboardClient(request, "david.agent");
 
         assertNotNull(response);
         assertEquals(20L, response.getCustomer().getId());
         assertEquals("AA-3-99887", response.getVehicle().getRegistrationNumber());
+        assertEquals("chala.tadesse.customer", response.getLoginUsername());
+        assertEquals("password123", response.getTemporaryPassword());
         assertTrue(response.getMessage().contains("onboarded successfully"));
 
         verify(notificationService).sendCustomerNotification(
                 eq(20L),
-                eq("Welcome to SafeMotor Portal"),
-                contains("David Kim"),
+                eq("SafeMotor Portal Credentials Dispatched"),
+                contains("chala.tadesse.customer"),
                 eq("SUCCESS"),
-                eq("/customers/20")
+                eq("/dashboards/customer")
         );
 
         verify(auditLogService).recordAction(

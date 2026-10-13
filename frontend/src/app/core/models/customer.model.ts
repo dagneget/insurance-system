@@ -14,6 +14,8 @@ export interface Customer {
   agentId?: number;
   agentName?: string;
   kycStatus?: 'PENDING' | 'VERIFIED' | 'REJECTED' | string;
+  loginUsername?: string;
+  temporaryPassword?: string;
 }
 
 export interface CustomerCreateRequest {
@@ -41,6 +43,8 @@ export interface ClientOnboardingResponse {
   customer: Customer;
   vehicle?: Vehicle;
   message: string;
+  loginUsername?: string;
+  temporaryPassword?: string;
 }
 
 export interface CustomerDirectoryItem {

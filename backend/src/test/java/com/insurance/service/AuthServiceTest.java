@@ -43,7 +43,7 @@ class AuthServiceTest {
 
     @Test
     void login_Success() {
-        when(userRepository.findByUsername("alexander.uw")).thenReturn(Optional.of(sampleUser));
+        when(userRepository.findByUsernameOrEmailIgnoreCase("alexander.uw")).thenReturn(Optional.of(sampleUser));
         when(userRepository.save(any(User.class))).thenReturn(sampleUser);
 
         LoginRequest request = new LoginRequest("alexander.uw", "password123");
@@ -57,8 +57,20 @@ class AuthServiceTest {
     }
 
     @Test
+    void login_ByEmail_Success() {
+        when(userRepository.findByUsernameOrEmailIgnoreCase("alexander@demo.test")).thenReturn(Optional.of(sampleUser));
+        when(userRepository.save(any(User.class))).thenReturn(sampleUser);
+
+        LoginRequest request = new LoginRequest("alexander@demo.test", "password123");
+        UserDto result = authService.login(request);
+
+        assertNotNull(result);
+        assertEquals("alexander.uw", result.getUsername());
+    }
+
+    @Test
     void login_InvalidPassword_ThrowsException() {
-        when(userRepository.findByUsername("alexander.uw")).thenReturn(Optional.of(sampleUser));
+        when(userRepository.findByUsernameOrEmailIgnoreCase("alexander.uw")).thenReturn(Optional.of(sampleUser));
 
         LoginRequest request = new LoginRequest("alexander.uw", "wrongpassword");
         assertThrows(BusinessRuleException.class, () -> authService.login(request));
@@ -67,7 +79,7 @@ class AuthServiceTest {
     @Test
     void login_InactiveAccount_ThrowsException() {
         sampleUser.setActive(false);
-        when(userRepository.findByUsername("alexander.uw")).thenReturn(Optional.of(sampleUser));
+        when(userRepository.findByUsernameOrEmailIgnoreCase("alexander.uw")).thenReturn(Optional.of(sampleUser));
 
         LoginRequest request = new LoginRequest("alexander.uw", "password123");
         assertThrows(BusinessRuleException.class, () -> authService.login(request));
